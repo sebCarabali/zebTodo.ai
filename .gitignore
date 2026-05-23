@@ -21,31 +21,36 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environment
+# Virtual environments
 venv/
-ENV/
 env/
+ENV/
 .venv/
 .env/
-
-# Logs
-*.log
-server.log
 
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# Environment variables
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage
+.coverage
+coverage/
+htmlcov/
+
+# Environment
 .env
 .env.local
+*.env.*
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# MyPy
+.mypy_cache/
 ```
