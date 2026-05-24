@@ -3,6 +3,11 @@
 import uuid
 from datetime import datetime
 from typing import List, Optional, Dict, Any
+from io import BytesIO
+
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
+from openpyxl.utils import get_column_letter
 
 from app.domain.entities import Task
 from app.domain.repositories import (
@@ -213,3 +218,89 @@ class TaskUseCases:
             completed_at=task.completed_at,
             last_work_duration=task.last_work_duration
         )
+
+    def export_project_to_excel(
+        self, project_id: str, current_user_id: str
+    ) -> BytesIO:
+        """Export project tasks to Excel file"""
+        # Verify project exists and user is partner
+        project = self.project_repository.get_by_id(project_id)
+        if not project:
+            raise ValueError("Project not found")
+
+        if not self.project_repository.is_partner(project_id, current_user_id):
+            raise PermissionError("Not authorized to view tasks in this project")
+
+        # Get all tasks for the project
+        tasks = self.task_repository.get_by_project(project_id)
+        
+        # Create workbook and worksheet
+        wb = Workbook()
+        ws = wb.active
+        ws.title = f"Tasks - {project.name}"
+
+        # Define styles
+        header_font = Font(bold=True, color="FFFFFF", size=12)
+        header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        header_alignment = Alignment(horizontal="center", vertical="center")
+        
+        thin_border = Border(
+            left=Side(style='thin'),
+            right=Side(style='thin'),
+            top=Side(style='thin'),
+            bottom=Side(style='thin')
+        )
+        
+        center_alignment = Alignment(horizontal="center", vertical="center")
+        left_alignment = Alignment(horizontal="left", vertical="center", wrap_text=True)
+
+        # Define headers
+        headers = [
+            "Task ID", "Title", "Description", "Assigned To", 
+            "Status", "Created At", "Completed At", "Last Work Duration (sec)"
+        ]
+
+        # Add headers with styling
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+            cell.border = thin_border
+
+        # Add task data
+        for row_num, task in enumerate(tasks, 2):
+            ws.cell(row=row_num, column=1, value=task.id).border = thin_border
+            ws.cell(row=row_num, column=2, value=task.title).alignment = left_alignment
+            ws.cell(row=row_num, column=2).border = thin_border
+            
+            desc_cell = ws.cell(row=row_num, column=3, value=task.description or "")
+            desc_cell.alignment = left_alignment
+            desc_cell.border = thin_border
+            
+            ws.cell(row=row_num, column=4, value=task.assigned_to or "Unassigned").border = thin_border
+            
+            status_cell = ws.cell(row=row_num, column=5, value="Completed" if task.completed else "Pending")
+            status_cell.alignment = center_alignment
+            status_cell.border = thin_border
+            if task.completed:
+                status_cell.font = Font(color="008000", bold=True)  # Green for completed
+            else:
+                status_cell.font = Font(color="FFA500", bold=True)  # Orange for pending
+            
+            ws.cell(row=row_num, column=6, value=task.created_at.strftime("%Y-%m-%d %H:%M:%S")).border = thin_border
+            ws.cell(row=row_num, column=7, value=task.completed_at.strftime("%Y-%m-%d %H:%M:%S") if task.completed_at else "").border = thin_border
+            ws.cell(row=row_num, column=8, value=task.last_work_duration or 0).alignment = center_alignment
+            ws.cell(row=row_num, column=8).border = thin_border
+
+        # Auto-adjust column widths
+        column_widths = [15, 30, 40, 20, 12, 20, 20, 25]
+        for i, width in enumerate(column_widths, 1):
+            ws.column_dimensions[get_column_letter(i)].width = width
+
+        # Save to BytesIO
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        return output

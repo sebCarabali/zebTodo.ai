@@ -180,6 +180,7 @@ function renderProjects() {
             <div class="card-actions">
                 <button class="btn-primary" onclick="openProject(${project.id})">Open</button>
                 <button class="btn-secondary" onclick="showAddPartnerModal(${project.id})">Add Partner</button>
+                <button class="btn-success" onclick="exportProjectToExcel(${project.id})">📊 Export Excel</button>
             </div>
         </div>
     `).join('');
@@ -249,6 +250,31 @@ function openProject(projectId) {
     elements.tasksView.classList.remove('hidden');
     
     loadTasks(projectId);
+}
+
+async function exportProjectToExcel(projectId) {
+    try {
+        const response = await fetch(`${API_BASE}/projects/${projectId}/export`, {
+            headers: { 'Authorization': `Bearer ${state.token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to export project');
+
+        // Create blob and download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `project_${projectId}_tasks.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        alert('Project exported successfully!');
+    } catch (error) {
+        alert(error.message);
+    }
 }
 
 async function loadTasks(projectId) {

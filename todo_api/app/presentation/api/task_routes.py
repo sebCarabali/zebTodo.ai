@@ -1,6 +1,7 @@
 """Task API routes - Task and timer management endpoints"""
 
 from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -228,6 +229,30 @@ async def get_task_timer(
             started_at=result.started_at.isoformat() if result.started_at else None,
             elapsed_seconds=result.elapsed_seconds,
             user_id=result.user_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+
+
+@router.get("/projects/{project_id}/export")
+async def export_project_tasks(
+    project_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Export project tasks to Excel file"""
+    use_cases = get_task_use_cases()
+    
+    try:
+        excel_file = use_cases.export_project_to_excel(project_id, current_user["id"])
+        
+        return StreamingResponse(
+            excel_file,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": f"attachment; filename=project_{project_id}_tasks.xlsx"
+            }
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
