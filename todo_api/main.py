@@ -6,7 +6,7 @@ Implements Clean Architecture with dependency injection.
 from datetime import datetime
 from fastapi import FastAPI
 
-from presentation.api import user_router, project_router, task_router
+from app.presentation.api import user_router, project_router, task_router
 
 
 # Create FastAPI application
