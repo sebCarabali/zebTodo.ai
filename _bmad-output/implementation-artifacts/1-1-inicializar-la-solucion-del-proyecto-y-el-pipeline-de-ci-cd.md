@@ -38,11 +38,11 @@ so that cada historia siguiente se construye, prueba y despliega sobre una base 
   - [x] Subtask 4.1: Confirmar/crear `Juntos.Tests` (xUnit) con referencia a `Juntos.AppHost` para soportar pruebas de integración vía `DistributedApplicationTestingBuilder` (decisión de Architecture.md, no implementar pruebas reales aún — solo el proyecto vacío con la referencia)
   - [x] Subtask 4.2: `dotnet sln add Juntos.Tests/Juntos.Tests.csproj`
   - [x] Subtask 4.3: Crear `.github/workflows/ci-cd.yml` con un job `build-and-test` que se dispare en `push` (todas las ramas) y `pull_request`: `actions/checkout`, `actions/setup-dotnet` (channel `10.0.x`), `dotnet restore`, `dotnet build --no-restore`, `dotnet test --no-build`
-- [ ] Task 5: Configurar el despliegue automático a Azure Container Apps en push a `main` (AC: #4)
-  - [ ] Subtask 5.1: Ejecutar `azd pipeline config` localmente (requiere Azure Developer CLI instalado y sesión `az login`/`azd auth login` activa) — selecciona proveedor **GitHub**, autenticación **OIDC/federated credentials** (default), y permite que `azd` cree los secrets/variables del repo automáticamente: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_ENV_NAME`, `AZURE_LOCATION`
-  - [ ] Subtask 5.2: Revisar el workflow que `azd pipeline config` agrega/actualiza en `.github/workflows/azure-dev.yml` (o fusionar su job `deploy` dentro de `ci-cd.yml` si se prefiere un solo archivo) — debe instalar `azd` vía `Azure/setup-azd@v1.0.0` (confirmar última versión en https://github.com/Azure/setup-azd/releases antes de fijar el tag) y ejecutar `azd deploy`
-  - [ ] Subtask 5.3: Condicionar el job de deploy a `github.ref == 'refs/heads/main'` y a que dependa (`needs:`) del job `build-and-test` de Task 4 — un push a una rama distinta de `main` nunca debe disparar `azd deploy`
-  - [ ] Subtask 5.4: Hacer un push de prueba a una rama feature (debe correr solo build+test) y luego a `main` (debe correr build+test y luego `azd deploy`) para validar el AC #4 end-to-end
+- [ ] Task 5: Configurar el despliegue automático a Azure Container Apps en push a `main` (AC: #4) — **bloqueada en Subtask 5.1 (acción humana pendiente)**
+  - [ ] Subtask 5.1: Ejecutar `azd pipeline config` localmente (requiere Azure Developer CLI instalado y sesión `az login`/`azd auth login` activa) — selecciona proveedor **GitHub**, autenticación **OIDC/federated credentials** (default), y permite que `azd` cree los secrets/variables del repo automáticamente: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_ENV_NAME`, `AZURE_LOCATION` — **PENDIENTE, requiere acción humana, ver Completion Notes**
+  - [x] Subtask 5.2: Revisar el workflow que `azd pipeline config` agrega/actualiza en `.github/workflows/azure-dev.yml` (o fusionar su job `deploy` dentro de `ci-cd.yml` si se prefiere un solo archivo) — debe instalar `azd` vía `Azure/setup-azd@v1.0.0` (confirmar última versión en https://github.com/Azure/setup-azd/releases antes de fijar el tag) y ejecutar `azd deploy`
+  - [x] Subtask 5.3: Condicionar el job de deploy a `github.ref == 'refs/heads/main'` y a que dependa (`needs:`) del job `build-and-test` de Task 4 — un push a una rama distinta de `main` nunca debe disparar `azd deploy`
+  - [x] Subtask 5.4: Hacer un push de prueba a una rama feature (debe correr solo build+test) y luego a `main` (debe correr build+test y luego `azd deploy`) para validar el AC #4 end-to-end — **validado parcialmente, ver Completion Notes (cambio de estrategia de ramas)**
 
 ## Dev Notes
 
@@ -105,7 +105,7 @@ so that cada historia siguiente se construye, prueba y despliega sobre una base 
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Claude Sonnet 4.6 (claude-sonnet-4-6)
 
 ### Debug Log References
 
@@ -119,5 +119,42 @@ so that cada historia siguiente se construye, prueba y despliega sobre una base 
 - Task 4 (decisión de diseño de CI): el job `build-and-test` de `ci-cd.yml` ejecuta `dotnet restore/build/test` apuntando a `Juntos.Tests/Juntos.Tests.csproj` (no a `Juntos.sln`). `Juntos.Tests` referencia `Juntos.AppHost`, que a su vez referencia `Juntos.ApiService` y `Juntos.Web` — por lo tanto este único comando ya restaura/compila/prueba esos 4 proyectos transitivamente, cumpliendo el AC #3 ("build y el proyecto de pruebas xUnit"). Se excluyó deliberadamente `Juntos.Mobile` (no es una dependencia de `Juntos.Tests`) porque sus 4 target frameworks (`net10.0-android/ios/maccatalyst/windows10.0`) requieren workloads de MAUI + SDK de Android (nivel API 36) + tooling de Mac/Windows que no están provisionados en el runner `ubuntu-latest` por defecto; provisionar ese tooling en CI es trabajo fuera del alcance de esta historia (que es solo scaffolding) y debería abordarse en una historia dedicada a CI/CD de Mobile.
 - Task 5: Se confirmó (verificación en GitHub vía `gh release list`) que la versión más reciente de `Azure/setup-azd` al momento de implementar es `v2.3.0` (tag móvil `v2`), no `v1.0.0` como sugería el Dev Notes original — se fijó `Azure/setup-azd@v2` en el workflow. También se fijaron `actions/checkout@v7` y `actions/setup-dotnet@v5` (últimas versiones mayores verificadas de la misma forma).
 - Task 5: El job `deploy` quedó armado en `.github/workflows/ci-cd.yml` (fusionado en el mismo archivo que `build-and-test`, condicionado a `github.ref == 'refs/heads/main'` y `needs: build-and-test`) pero **no puede ejecutarse exitosamente todavía**: requiere que un humano con acceso a la suscripción de Azure ejecute `azd auth login` + `azd pipeline config` desde su máquina (ver Subtask 5.1) para crear los secrets/variables de GitHub (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` como secrets; `AZURE_ENV_NAME`, `AZURE_LOCATION` como variables) que el job consume vía `${{ secrets.* }}`/`${{ vars.* }}`. Sin esos valores, el job `deploy` fallará en el primer push a `main` hasta que se complete ese paso manual.
+- **Hallazgo crítico durante Subtask 5.4 (push de validación) — cambio de estrategia de ramas:** al hacer `git fetch` para el push de prueba a `main`, se descubrió que `origin/main` del repo remoto (`sebCarabali/zebTodo.ai`) ya contenía historia de un proyecto completamente distinto y no relacionado (una "Todo API" en Python/FastAPI + frontend JS, mergeada vía PRs #1-#3: commits `d7c5ca9`, `286c2d5`, `08987bb`, `a5d19fb`, `0005aa3`), que el checkout local nunca tenía. Se pausó el trabajo y se consultó al usuario antes de tocar `main`. Decisión del usuario: crear una estrategia de ramas `dev` (desarrollo) → `sit` (pre-productivo) → `main` (producción, intocable directamente), preservando el historial del Todo API.
+  - Se reconcilió el historial: `main` se alineó exactamente con `origin/main` (estado de producción actual, con el Todo API). Se creó `dev` rebaseando el commit de scaffolding de Juntos (`302d85a`) sobre ese `main` reconciliado (commit resultante: `8be71d6`). Se resolvió un conflicto de merge en `.gitignore` (el `main`/Todo API tenía una lista de extensiones de archivos comprimidos; se conservó esa lista + se añadió `venv/`/`.venv/` junto con el `.gitignore` completo de .NET + `.azure` que ya tenía el commit de Juntos). Se creó `sit` desde `main` (sin cambios adicionales, lista para promociones futuras). Se pushearon `dev` y `sit` a `origin`. `main` no requirió push (ya estaba sincronizado con `origin/main`).
+  - **Subtask 5.4 quedó validada solo parcialmente, por diseño:** se confirmó (dos veces — una vez en una rama feature descartable, otra vez en el push real a `dev`) que el job `deploy` se omite (`skipped`) correctamente en cualquier rama que no sea `main`, dejando correr únicamente `build-and-test` en verde. **No se hizo push a `main`** para validar el disparo real de `azd deploy`, porque la nueva política del usuario es que `main` es la rama de producción y no debe recibir trabajo de esta historia directamente — esa promoción (`dev` → `sit` → `main`) es una decisión de release que corresponde al usuario, no al Dev Agent. Cuando el usuario decida promover este trabajo a `main`, el primer push allí disparará el job `deploy` (que fallará hasta completar la Subtask 5.1 pendiente).
+  - El proyecto Juntos (y todos sus archivos: `_bmad-output/`, `Juntos.*`, `azure.yaml`, `aspire.config.json`, `.github/workflows/ci-cd.yml`) vive por ahora **solo en `dev`** (y de ahí se propagará a `sit`/`main` cuando el usuario lo decida). `main`/`sit` actualmente solo contienen el proyecto Todo API preexistente.
 
 ### File List
+
+**Nuevos (generados por templates de .NET, sin modificación manual salvo donde se indica):**
+- `Juntos.sln`
+- `Juntos.AppHost/` (proyecto completo: `AppHost.cs`, `Juntos.AppHost.csproj`, `Properties/launchSettings.json`, `appsettings*.json`)
+- `Juntos.ServiceDefaults/` (proyecto completo: `Extensions.cs`, `Juntos.ServiceDefaults.csproj`)
+- `Juntos.ApiService/` (proyecto completo: `Program.cs`, `Juntos.ApiService.csproj`, `Juntos.ApiService.http`, `Properties/launchSettings.json`, `appsettings*.json`)
+- `Juntos.Web/` (proyecto completo: `Program.cs`, `Components/**`, `wwwroot/**`, `Juntos.Web.csproj`, `Properties/launchSettings.json`, `appsettings*.json`, `WeatherApiClient.cs`)
+- `Juntos.Mobile/` (proyecto completo: `App.xaml(.cs)`, `AppShell.xaml(.cs)`, `MainPage.xaml(.cs)`, `MauiProgram.cs`, `Platforms/**`, `Resources/**`, `Juntos.Mobile.csproj`, `Properties/launchSettings.json`)
+- `Juntos.Tests/Juntos.Tests.csproj` (placeholder `UnitTest1.cs` generado por el template fue eliminado, ver Completion Notes)
+
+**Nuevos (con intervención manual significativa):**
+- `azure.yaml` — generado por `azd init`, campo `name:` corregido manualmente de "zeb-todo" a "juntos"
+- `aspire.config.json` — generado por `dotnet new aspire-starter`
+- `.github/workflows/ci-cd.yml` — escrito a mano (jobs `build-and-test` y `deploy`)
+
+**Modificados:**
+- `.gitignore` — reemplazado por el `.gitignore` estándar de .NET (`dotnet new gitignore`) + entrada `.azure`; luego, durante la reconciliación de ramas (Subtask 5.4), se fusionó con el `.gitignore` preexistente de `main` (lista de extensiones de archivos comprimidos) y se añadieron `venv/`/`.venv/`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — estado de la historia `1-1-...` actualizado a `review`
+- `_bmad-output/implementation-artifacts/1-1-inicializar-la-solucion-del-proyecto-y-el-pipeline-de-ci-cd.md` — este archivo (frontmatter `baseline_commit`, checkboxes de Tasks/Subtasks, Dev Agent Record, Status)
+
+**Eliminados:**
+- `Juntos.Tests/UnitTest1.cs` (placeholder vacío del template `xunit`)
+
+**Ramas de git creadas/empujadas a `origin` (no son archivos, pero documentan el alcance del cambio):**
+- `dev` (contiene todo lo anterior, commit `8be71d6`)
+- `sit` (idéntica a `main`/producción por ahora, sin el trabajo de esta historia)
+- `main` sin cambios de esta historia (permanece como estaba en `origin`, con el proyecto Todo API preexistente)
+
+## Change Log
+
+| Fecha | Cambio |
+|---|---|
+| 2026-06-22 | Implementación de las Tasks 1-4 completa (solución .NET Aspire Starter inicializada, proyecto Mobile (MAUI) agregado, arranque local orquestado verificado, proyecto xUnit + pipeline CI/CD `build-and-test` creado y verificado en verde). Task 5 (deploy) armada y condicionada a `main`, pero **bloqueada**: Subtask 5.1 (`azd pipeline config`) requiere ejecución humana con credenciales de Azure. Se descubrió y reconcilió historia de git divergente en `origin/main` (proyecto Todo API preexistente no relacionado); por decisión del usuario se creó la estrategia de ramas `dev` → `sit` → `main`, y el trabajo de esta historia vive en `dev` en espera de promoción. Status permanece `in-progress` hasta que se complete la Subtask 5.1 (workflow HALT, ver Completion Notes). |
