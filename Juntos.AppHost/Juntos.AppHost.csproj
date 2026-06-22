@@ -1,0 +1,16 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.4.6">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>772ffe00-0d85-4144-8668-1db9f61bd055</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Juntos.ApiService\Juntos.ApiService.csproj" />
+    <ProjectReference Include="..\Juntos.Web\Juntos.Web.csproj" />
+  </ItemGroup>
+
+</Project>

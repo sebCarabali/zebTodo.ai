@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Juntos — Confirmación de Toma (key screen)</title>
+<style>
+/* Illustrates:
+   - Information Architecture > Confirmación de Toma (tap en tarjeta de medicamento)
+   - Component Patterns > Confirm Dose Button (confirmación en dos pasos para dosis críticas)
+   - Interaction Primitives > tap + confirmar en diálogo para dosis crítica (fricción deliberada)
+   - Voice and Tone > verbo explícito "Confirmar toma", lenguaje calmado
+   - Accessibility Floor > objetivos táctiles >= 56px en acciones primarias; anuncio de rol + estado
+*/
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #EFEBE2;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 48px;
+  align-items: flex-start;
+}
+
+.scene-label {
+  width: 100%;
+  font-size: 20px;
+  font-weight: 700;
+  color: #232323;
+  margin-bottom: 8px;
+}
+
+.scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.scene-caption {
+  font-size: 14px;
+  color: #6B6B63;
+  text-align: center;
+  max-width: 320px;
+  line-height: 1.4;
+}
+
+.phone {
+  width: 360px;
+  height: 740px;
+  background: #111;
+  border-radius: 44px;
+  padding: 14px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+}
+
+.screen {
+  width: 100%;
+  height: 100%;
+  background: #FAF8F4;
+  border-radius: 32px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 22px;
+  background: #111;
+  border-radius: 0 0 14px 14px;
+  z-index: 5;
+}
+
+.statusbar { height: 30px; flex-shrink: 0; }
+
+/* nav bar */
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 12px 16px;
+  flex-shrink: 0;
+}
+
+.back-btn {
+  font-size: 22px;
+  color: #2F6F62;
+  width: 32px;
+}
+
+.navbar-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #232323;
+}
+
+.detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 20px 24px 20px;
+}
+
+.med-hero {
+  background: #FFFFFF;
+  border: 2px solid #C0392B;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.med-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(192,57,43,0.1);
+  color: #C0392B;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 9999px;
+  padding: 5px 10px;
+  margin-bottom: 12px;
+}
+
+.med-hero-name {
+  font-size: 24px;
+  font-weight: 800;
+  color: #232323;
+  margin-bottom: 6px;
+}
+
+.med-hero-meta {
+  font-size: 15px;
+  color: #6B6B63;
+  margin-bottom: 2px;
+}
+
+.detail-section {
+  margin-bottom: 20px;
+}
+
+.detail-section-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #6B6B63;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.detail-row {
+  background: #FFFFFF;
+  border: 1px solid #E5E1D8;
+  border-radius: 14px;
+  padding: 16px;
+  font-size: 16px;
+  color: #232323;
+  line-height: 1.5;
+}
+
+.detail-row + .detail-row { margin-top: 8px; }
+
+.detail-row .row-icon { margin-right: 8px; }
+
+/* Confirm Dose Button */
+.confirm-dose-btn {
+  width: 100%;
+  min-height: 56px;
+  background: #2F6F62;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  font-size: 17px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.hint-text {
+  font-size: 14px;
+  color: #6B6B63;
+  text-align: center;
+  margin-top: 12px;
+  line-height: 1.4;
+}
+
+/* ---------- Modal / two-step confirm dialog ---------- */
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(35,35,35,0.45);
+  display: flex;
+  align-items: flex-end;
+  z-index: 10;
+}
+
+.modal-sheet {
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px 28px 20px;
+  box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
+}
+
+.modal-grabber {
+  width: 40px;
+  height: 4px;
+  background: #E5E1D8;
+  border-radius: 9999px;
+  margin: 0 auto 20px auto;
+}
+
+.modal-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 9999px;
+  background: rgba(192,57,43,0.1);
+  color: #C0392B;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #232323;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.modal-body {
+  font-size: 16px;
+  color: #6B6B63;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.modal-body strong { color: #232323; }
+
+.modal-note {
+  font-size: 14px;
+  color: #8E4F16;
+  background: rgba(181,101,29,0.1);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 16px 0;
+  line-height: 1.4;
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.modal-btn-primary {
+  width: 100%;
+  min-height: 56px;
+  background: #2F6F62;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.modal-btn-secondary {
+  width: 100%;
+  min-height: 56px;
+  background: transparent;
+  color: #6B6B63;
+  border: none;
+  border-radius: 9999px;
+  font-size: 16px;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<div class="scene-label">Juntos — Confirmación de Toma (móvil, dosis crítica) — Component Patterns: Confirm Dose Button (confirmación en dos pasos)</div>
+
+<!-- SCENE A: Detail screen, before confirming -->
+<div class="scene">
+  <div class="phone">
+    <div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"></div>
+      <div class="navbar">
+        <span class="back-btn">&#8592;</span>
+        <span class="navbar-title">Confirmación de Toma</span>
+      </div>
+
+      <div class="detail-body">
+        <div class="med-hero">
+          <span class="med-hero-badge">&#9888; CRÍTICO</span>
+          <div class="med-hero-name">Losartán</div>
+          <div class="med-hero-meta">Programado: 8:00 a.m.</div>
+          <div class="med-hero-meta">1 tableta · 50mg</div>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-section-label">Detalle</div>
+          <div class="detail-row"><span class="row-icon">&#128138;</span>Tomar con un vaso de agua, después del desayuno.</div>
+          <div class="detail-row"><span class="row-icon">&#128100;</span>Paciente: Don Carlos Ramírez</div>
+        </div>
+
+        <button class="confirm-dose-btn">&#10003; Confirmar toma</button>
+        <div class="hint-text">Como es una dosis crítica, te pediremos confirmar una vez más en la siguiente pantalla.</div>
+      </div>
+    </div>
+  </div>
+  <div class="scene-caption"><strong>(a) Detalle de la dosis crítica, antes de confirmar.</strong> Botón ancho completo, alto mínimo 56px, verbo explícito "Confirmar toma" (nunca solo un ícono). Tap abre el diálogo de confirmación — primer paso de la fricción deliberada para dosis críticas.</div>
+</div>
+
+<!-- SCENE B: Two-step confirm dialog open -->
+<div class="scene">
+  <div class="phone">
+    <div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"></div>
+      <div class="navbar">
+        <span class="back-btn">&#8592;</span>
+        <span class="navbar-title">Confirmación de Toma</span>
+      </div>
+
+      <div class="detail-body">
+        <div class="med-hero">
+          <span class="med-hero-badge">&#9888; CRÍTICO</span>
+          <div class="med-hero-name">Losartán</div>
+          <div class="med-hero-meta">Programado: 8:00 a.m.</div>
+          <div class="med-hero-meta">1 tableta · 50mg</div>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-section-label">Detalle</div>
+          <div class="detail-row"><span class="row-icon">&#128138;</span>Tomar con un vaso de agua, después del desayuno.</div>
+          <div class="detail-row"><span class="row-icon">&#128100;</span>Paciente: Don Carlos Ramírez</div>
+        </div>
+
+        <button class="confirm-dose-btn">&#10003; Confirmar toma</button>
+      </div>
+
+      <!-- Modal: second confirmation step -->
+      <div class="modal-overlay">
+        <div class="modal-sheet">
+          <div class="modal-grabber"></div>
+          <div class="modal-icon">&#9888;</div>
+          <div class="modal-title">Confirmar toma de Losartán, 8:00 a.m.</div>
+          <div class="modal-body">Esta dosis es <strong>crítica</strong>. Al confirmar, se registrará la hora real de la toma y se avisará a tus cuidadores.</div>
+          <div class="modal-note">Pedimos un paso adicional en dosis críticas para evitar toques accidentales que disparen avisos a toda la familia.</div>
+          <div class="modal-actions">
+            <button class="modal-btn-primary">Sí, confirmar toma</button>
+            <button class="modal-btn-secondary">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="scene-caption"><strong>(b) Segundo paso — diálogo de confirmación.</strong> Tap + confirmar en diálogo, exclusivo de dosis críticas, para evitar toques accidentales que disparen una cadena de notificaciones (Interaction Primitives). VoiceOver/TalkBack anunciaría "Botón, Confirmar toma de Losartán 8am".</div>
+</div>
+
+</body>
+</html>

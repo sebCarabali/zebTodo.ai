@@ -1,0 +1,92 @@
+# generated: 2026-06-21
+# last_updated: 2026-06-21
+# project: Juntos
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-06-21
+last_updated: 2026-06-21
+project: Juntos
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  epic-1: in-progress
+  1-1-inicializar-la-solucion-del-proyecto-y-el-pipeline-de-ci-cd: in-progress
+  1-2-registro-e-inicio-de-sesion-del-paciente: backlog
+  1-3-crear-el-perfil-del-paciente-y-su-circulo-de-cuidado: backlog
+  1-4-invitar-a-un-cuidador-con-un-nivel-de-comparticion-de-datos: backlog
+  1-5-aceptar-invitacion-como-cuidador: backlog
+  1-6-cambiar-el-nivel-de-comparticion-de-un-cuidador-existente: backlog
+  1-7-remover-a-un-cuidador-del-circulo-de-cuidado: backlog
+  1-8-bloquear-nuevas-invitaciones-al-alcanzar-el-limite-de-5-cuidadores: backlog
+  1-9-crear-cuenta-asistida-para-un-paciente-con-consentimiento-documentado: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-crear-un-medicamento-con-su-horario-de-toma: backlog
+  2-2-editar-el-horario-o-dosis-de-un-medicamento-existente: backlog
+  2-3-eliminar-un-medicamento-del-calendario: backlog
+  2-4-ver-el-calendario-de-medicacion-filtrado-por-nivel-de-comparticion-de-datos: backlog
+  2-5-sincronizacion-en-tiempo-real-de-cambios-del-calendario-entre-dispositivos-del-circulo-de-cuidado: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-confirmar-una-toma-con-hora-real: backlog
+  3-2-notificacion-de-confirmacion-cruzada-en-tiempo-real: backlog
+  3-3-confirmacion-en-dos-pasos-para-dosis-criticas: backlog
+  3-4-confirmacion-cruzada-filtrada-por-nivel-de-comparticion: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-marcar-desmarcar-un-medicamento-como-critico: backlog
+  4-2-iniciar-la-cadena-de-escalada-con-push-al-paciente-y-a-cuidadores-principales: backlog
+  4-3-escalar-a-sms-a-cuidadores-principales: backlog
+  4-4-escalar-a-llamada-automatizada-al-paciente: backlog
+  4-5-detener-la-cadena-de-escalada-ante-cualquier-confirmacion-de-toma: backlog
+  4-6-designar-contactos-de-emergencia: backlog
+  4-7-activar-el-protocolo-de-ultima-linea-tras-agotar-la-cadena-de-escalada: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-ver-el-panel-de-adherencia-historica-por-rango-de-fechas: backlog
+  5-2-detectar-y-notificar-una-alerta-de-patron-tras-dias-consecutivos-de-incumplimiento: backlog
+  5-3-distinguir-visualmente-la-alerta-de-patron-de-la-alerta-puntual-en-el-centro-de-alertas: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-designar-cuidador-de-respaldo: backlog
+  6-2-cambiar-de-cuidador-de-respaldo: backlog
+  6-3-solicitar-y-aprobar-la-transferencia-de-control-de-la-cuenta: backlog
+  epic-6-retrospective: optional
