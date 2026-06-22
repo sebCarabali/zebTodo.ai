@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-06-21
-last_updated: 2026-06-21
+last_updated: 2026-06-22
 project: Juntos
 project_key: NOKEY
 tracking_system: file-system
@@ -43,7 +43,7 @@ story_location: _bmad-output/implementation-artifacts
 
 development_status:
   epic-1: in-progress
-  1-1-inicializar-la-solucion-del-proyecto-y-el-pipeline-de-ci-cd: in-progress
+  1-1-inicializar-la-solucion-del-proyecto-y-el-pipeline-de-ci-cd: review
   1-2-registro-e-inicio-de-sesion-del-paciente: backlog
   1-3-crear-el-perfil-del-paciente-y-su-circulo-de-cuidado: backlog
   1-4-invitar-a-un-cuidador-con-un-nivel-de-comparticion-de-datos: backlog
